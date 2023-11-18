@@ -1,7 +1,7 @@
 package com.meharet.s3example.controller;
 
-import com.meharet.s3example.service.StorageService;
-import org.springframework.core.io.ByteArrayResource;
+import com.meharet.s3example.service.FileStorageService;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -13,35 +13,33 @@ import org.springframework.web.multipart.MultipartFile;
 @RequestMapping("/api/files")
 public class FileController {
 
-    private final StorageService storageService;
+    private final FileStorageService fileStorageService;
 
-    public FileController(StorageService storageService) {
-        this.storageService = storageService;
+    public FileController( FileStorageService fileStorageService) {
+        this.fileStorageService = fileStorageService;
     }
 
 
     @PostMapping("upload")
     public ResponseEntity<String> upload(@RequestParam MultipartFile file)
     {
-        return ResponseEntity.ok(storageService.uploadFile(file));
+        return ResponseEntity.ok(fileStorageService.storeFile(file));
     }
 
     @GetMapping("download/{fileName}")
-    public ResponseEntity<ByteArrayResource> download(@PathVariable(name = "fileName") String fileName)
+    public ResponseEntity<Resource> download(@PathVariable(name = "fileName") String fileName)
     {
-        byte[] bytes = storageService.downloadFile(fileName);
-        ByteArrayResource resource = new ByteArrayResource(bytes);
+        Resource resource = fileStorageService.loadFile(fileName);
         return ResponseEntity.ok()
-                .contentLength(bytes.length)
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
                 .header(HttpHeaders.CONTENT_DISPOSITION,"attachment; filename=\"" + fileName + "\"")
                 .body(resource);
     }
 
     @DeleteMapping("/{fileName}")
-    public ResponseEntity<String> delete(@PathVariable(name = "fileName") String fileName)
+    public ResponseEntity<Boolean> delete(@PathVariable(name = "fileName") String fileName)
     {
-        return ResponseEntity.ok(storageService.deleteFile(fileName));
+        return ResponseEntity.ok(fileStorageService.deleteFile(fileName));
     }
 
 }
